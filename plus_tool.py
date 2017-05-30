@@ -3,12 +3,12 @@
 
 '''doc'''
 
-def get_sum_in_arr(src_arr, tar_sum):
+def get_by_sum(src_arr, tar_sum):
     '''doc'''
     src_arr = sorted(src_arr, key=lambda item: item["key"])
     final_result = []
     cur_result = []
-    def get_by_sum(cur_sum, cur_index):
+    def iter_by_sum(cur_sum, cur_index):
         '''doc'''
         if cur_index >= len(src_arr):
             return
@@ -24,18 +24,18 @@ def get_sum_in_arr(src_arr, tar_sum):
             final_result.append(tmp)
 
         cur_result.append(cur_index)
-        get_by_sum(cur_sum - cur_val, cur_index + 1)
+        iter_by_sum(cur_sum - cur_val, cur_index + 1)
         cur_result.pop()
-        get_by_sum(cur_sum, cur_index + 1)
+        iter_by_sum(cur_sum, cur_index + 1)
 
-    get_by_sum(tar_sum, 0)
+    iter_by_sum(tar_sum, 0)
     return final_result
 
 
 def main():
     '''doc'''
     src_arr = [{"key":1, "data":"dasdsa1"}, {"key":5, "data":"2"}, {"key":4, "data":"3"}]
-    tar_arr = get_sum_in_arr(src_arr, 5)
+    tar_arr = get_by_sum(src_arr, 5)
     print(tar_arr)
 
 
