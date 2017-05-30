@@ -3,25 +3,41 @@
 
 '''doc'''
 
-def get_num_in_arr(arr, add_sum):
+def get_sum_in_arr(src_arr, tar_sum):
     '''doc'''
-    arr_len = len(arr)
-    bin_max = 1<<arr_len
-    result_arr = []
-    for bin_num in range(1, bin_max):
-        cur_sum = 0
-        index_arr = []
-        for bin_index in range(arr_len):
-            if bin_num & (1<<bin_index) != 0:
-                cur_sum += arr[bin_index]
-                index_arr.append(bin_index)
+    src_arr = sorted(src_arr, key=lambda item: item["key"])
+    final_result = []
+    cur_result = []
+    def get_by_sum(cur_sum, cur_index):
+        '''doc'''
+        if cur_index >= len(src_arr):
+            return
+        cur_val = src_arr[cur_index]["key"]
+        if cur_sum < cur_val:
+            return
+        if cur_sum == cur_val:
+            tmp = []
+            tmp.append(src_arr[cur_index]["data"])
 
-        if add_sum == cur_sum:
-            result_arr.append(index_arr)
+            for cur_result_item in cur_result:
+                tmp.append(src_arr[cur_result_item]["data"])
+            final_result.append(tmp)
 
-    return result_arr
+        cur_result.append(cur_index)
+        get_by_sum(cur_sum - cur_val, cur_index + 1)
+        cur_result.pop()
+        get_by_sum(cur_sum, cur_index + 1)
+
+    get_by_sum(tar_sum, 0)
+    return final_result
+
+
+def main():
+    '''doc'''
+    src_arr = [{"key":1, "data":"dasdsa1"}, {"key":5, "data":"2"}, {"key":4, "data":"3"}]
+    tar_arr = get_sum_in_arr(src_arr, 5)
+    print(tar_arr)
+
 
 if __name__ == "__main__":
-    ARR = [1, 2, 3, 4, 5]
-    NUM = 12
-    print(get_num_in_arr(ARR, NUM))
+    main()
