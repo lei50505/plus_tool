@@ -1,0 +1,7 @@
+!.gitignore
+__pycache__/
+build
+*.spec
+*.exe
+*.xlsx
+*.rar

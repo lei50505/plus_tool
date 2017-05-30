@@ -6,6 +6,8 @@
 '''doc'''
 
 import os
+import time
+import traceback
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import numbers, PatternFill, Side, Border
@@ -417,4 +419,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print(traceback.format_exc())
+        time.sleep(120)
+    print("OK")
+    time.sleep(2)
