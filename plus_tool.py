@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#pylint: disable=broad-except, too-many-instance-attributes
+#pylint: disable=broad-except, too-many-instance-attributes, too-many-branches, too-many-statements, too-many-locals
 
 '''doc'''
+
+import os
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import numbers, PatternFill, Side, Border
@@ -65,6 +67,11 @@ class Cell():
         self.cell.fill = PatternFill(fill_type="solid", \
                             start_color="CCFFFF", end_color="CCFFFF")
 
+    def set_fill_yellow(self):
+        '''doc'''
+        self.cell.fill = PatternFill(fill_type="solid", \
+                            start_color="FFFFCC", end_color="FFFFCC")
+
     def set_border_thin(self):
         '''doc'''
         thin_side = Side(border_style="thin", color="000000")
@@ -88,6 +95,8 @@ class Sheet():
         self.num_row_dict = None
         self.num_row_list = None
 
+        self.num_row_data = None
+
         self.copy_row_count = 0
 
     def cell(self, row, col):
@@ -104,7 +113,7 @@ class Sheet():
         '''doc'''
         return self.sheet.max_row
 
-    def initnum_col_index(self):
+    def init_num_col_index(self):
         '''doc'''
         max_col = self.get_max_col()
         max_row = self.get_max_row()
@@ -159,6 +168,8 @@ class Sheet():
         self.num_row_dict = {}
         self.num_row_list = []
 
+        self.num_row_data = []
+
         num_col_index = self.num_col_index
         max_row = self.get_max_row()
         for row_index in range(1, max_row + 1):
@@ -170,6 +181,10 @@ class Sheet():
                 self.num_row_dict[row_index] = float_val
                 self.num_row_list.append(row_index)
 
+                tmp_data = {}
+                tmp_data["val"] = float_val
+                tmp_data["index"] = row_index
+                self.num_row_data.append(tmp_data)
                 dict_val = self.num_val_dict.get(float_val)
                 if dict_val is None:
                     self.num_val_dict[float_val] = 1
@@ -216,6 +231,8 @@ class Sheet():
                 tar_cell.set_fill_red()
             elif color == "blue":
                 tar_cell.set_fill_blue()
+            elif color == "yellow":
+                tar_cell.set_fill_yellow()
 
         self.copy_row_count += 1
 
@@ -306,9 +323,97 @@ def get_by_sum(src_arr, tar_sum):
 
 def main():
     '''doc'''
-    src_arr = [{"key":1, "data":"dasdsa1"}, {"key":5, "data":"2"}, {"key":4, "data":"3"}]
-    tar_arr = get_by_sum(src_arr, 5)
-    print(tar_arr)
+    if not os.path.isfile("in.xlsx"):
+        print("in.xlsx不存在")
+        return
+
+    in_book = load_book("in.xlsx")
+
+    if not in_book.has_sheet("Sheet1"):
+        print("in.xlsx中不存在Sheet1")
+        return
+
+    if not in_book.has_sheet("Sheet2"):
+        print("in.xlsx中不存在Sheet2")
+        return
+
+    in_sheet1 = in_book.sheet("Sheet1")
+
+    print("初始化Sheet1数字列序号")
+    in_sheet1.init_num_col_index()
+
+    in_sheet2 = in_book.sheet("Sheet2")
+
+    print("初始化Sheet2数字列序号")
+    in_sheet2.init_num_col_index()
+
+
+    out_book = create_book()
+
+    out_sheet = out_book.active()
+
+    sheet1_row_done = {}
+    sheet2_row_done = {}
+
+    sheet1_max_row = in_sheet1.get_max_row()
+    sheet2_max_row = in_sheet2.get_max_row()
+
+    for row_index in range(1, sheet1_max_row + 1):
+        sheet1_row_done[row_index] = False
+
+    for row_index in range(1, sheet2_max_row + 1):
+        sheet2_row_done[row_index] = False
+
+    print("初始化Sheet1数字列数据")
+    in_sheet1.init_num_col_dict()
+
+    print("初始化Sheet2数字列数据")
+    in_sheet2.init_num_col_dict()
+
+    print("正在处理数据")
+
+    src_arr = []
+    for num_row in in_sheet1.num_row_data:
+        src_arr_item = {}
+        src_arr_item["key"] = num_row["val"]
+        src_arr_item["data"] = num_row["index"]
+        src_arr.append(src_arr_item)
+
+
+
+    for num_row in in_sheet2.num_row_data:
+        tar_arr = get_by_sum(src_arr, num_row["val"])
+        color_index = 0
+        out_sheet.copy_row_from_sheet(in_sheet2, num_row["index"], "red")
+        sheet2_row_done[num_row["index"]] = True
+        for tar_item in tar_arr:
+            color_index += 1
+            for tar_index in tar_item:
+                sheet1_row_done[tar_index] = True
+                if color_index % 2 == 0:
+                    out_sheet.copy_row_from_sheet(in_sheet1, tar_index, "yellow")
+                else:
+                    out_sheet.copy_row_from_sheet(in_sheet1, tar_index, "blue")
+
+    for row_index in range(1, sheet1_max_row):
+        if sheet1_row_done[row_index]:
+
+            continue
+
+
+        sheet1_row_done[row_index] = True
+        out_sheet.copy_row_from_sheet(in_sheet1, row_index, "white")
+    for row_index in range(1, sheet2_max_row):
+        if sheet2_row_done[row_index]:
+            continue
+
+
+        sheet2_row_done[row_index] = True
+        out_sheet.copy_row_from_sheet(in_sheet2, row_index, "white")
+
+    out_book.save("out.xlsx")
+    out_book.close()
+    in_book.close()
 
 
 if __name__ == "__main__":
